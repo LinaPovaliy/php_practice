@@ -5,9 +5,13 @@ function calculateAverage($temperatures)
     if (empty($temperatures)) {
         return null;
     }
-    $sum = array_sum($temperatures);
-    $count =  count($temperatures);
-    $average = $sum / $count;
+
+    $sum = 0;
+    foreach ($temperatures as $item) {
+        $sum += $item;
+    }
+
+    $average = $sum / count($temperatures);
     print_r($average);
     print_r("\n");
 }

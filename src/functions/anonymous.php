@@ -20,7 +20,6 @@ function run(string $text)
 
 echo run('');     // null
 echo run('0');    // 0
-echo run('210');  // 0
 echo run('pow');  // w
 echo run('kids'); // s
 
