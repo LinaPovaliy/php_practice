@@ -248,3 +248,276 @@ FROM Outcome_o o LEFT JOIN Income_o i
                            ON o.point = i.point
                                AND o.date = i.date;
 
+# 30
+SELECT i.point, i.date, o.out, i.inc
+FROM (
+         SELECT point, date, sum(inc) AS inc
+         FROM Income
+         GROUP BY point, date
+     ) AS i
+         LEFT JOIN (
+    SELECT point, date, sum(out) AS out
+    FROM Outcome
+    GROUP BY point, date
+) AS o
+                   ON i.point = o.point
+                       AND i.date = o.date
+
+UNION
+SELECT o.point, o.date, o.out, i.inc
+FROM (
+         SELECT point, date, sum(out) AS out
+         FROM Outcome
+         GROUP BY point, date
+     ) AS o
+         LEFT JOIN (
+    SELECT point, date, sum(inc) AS inc
+    FROM Income
+    GROUP BY point, date
+) AS i
+                   ON o.point = i.point
+                       AND o.date = i.date;
+
+# 31
+SELECT class, country
+FROM Classes
+WHERE bore >= 16.0;
+
+# 32
+    WITH total
+AS (
+	SELECT country, bore, name
+	FROM Classes JOIN Ships
+	ON Classes.class = Ships.class
+
+	UNION
+	SELECT country, bore, ship
+	FROM Classes JOIN Outcomes
+	ON Classes.class = Outcomes.ship
+)
+
+SELECT country, cast(round(AVG(power(bore,3)*0.5),2) AS numeric(10,2)) AS weight
+FROM total
+GROUP BY country;
+
+# 33
+SELECT ship
+FROM Outcomes
+WHERE result = 'sunk'
+  AND battle = 'North Atlantic';
+
+# 34
+SELECT DISTINCT name
+FROM Classes AS cl JOIN Ships AS sh
+                        ON cl.class = sh.class
+WHERE launched >= 1922
+  AND displacement > 35000
+  AND TYPE = 'bb';
+
+# 35
+SELECT model, TYPE
+FROM Product
+WHERE model NOT LIKE '%[^0-9]%' OR model NOT LIKE '%[^a-z]%'
+   OR model NOT LIKE '%[^A-Z]%';
+
+# 36
+SELECT name
+FROM Ships
+WHERE name IN (
+    SELECT class
+    FROM Classes
+)
+
+UNION
+SELECT ship
+FROM Outcomes
+WHERE ship IN (
+    SELECT class
+    FROM Classes
+);
+
+# 37
+    WITH total_ship
+AS (
+	SELECT cl.class, sh.name
+	Classes AS cl JOIN Ships AS sh
+	ON cl.class = sh.class
+
+	UNION
+	SELECT cl.class, o.ship AS name
+	FROM Classes AS cl JOIN Outcomes AS o
+	ON cl.class = o.ship
+)
+
+SELECT class
+FROM total_ship
+GROUP BY class
+HAVING COUNT(class) = 1;
+
+# 38
+SELECT DISTINCT country
+FROM Classes
+WHERE TYPE = 'bb'
+  AND country IN (
+    SELECT DISTINCT country
+    FROM Classes
+    WHERE TYPE = 'bc'
+);
+
+# 39
+SELECT DISTINCT o2.ship
+FROM (
+         SELECT ship, battle, result, date
+         FROM Outcomes JOIN Battles
+                            ON Outcomes.battle = Battles.name
+         WHERE result='damaged'
+     ) AS o1
+         JOIN (
+    SELECT ship, battle, result, date
+    FROM Outcomes JOIN Battles
+                       ON Outcomes.battle = Battles.name
+) AS o2
+              ON o1.ship = o2.ship
+WHERE o1.date < o2.date;
+
+# 40
+SELECT cl.class, sh.name, cl.country
+FROM Ships AS sh, Classes AS cl
+WHERE sh.class = cl.class
+  AND numGuns >= 10;
+
+# 41
+SELECT DISTINCT maker, speed
+FROM Product, Laptop
+WHERE Product.model = Laptop.model
+  AND hd >= 10;
+
+SELECT 'cd' AS chr, cd AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)
+
+UNION
+SELECT  'model' AS chr, cast(model AS varchar) AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)
+
+UNION
+SELECT  'speed' AS chr, cast(speed AS varchar) AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)
+
+UNION
+SELECT  'ram' AS chr, cast(ram AS varchar) AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)
+
+UNION
+SELECT  'hd' AS chr, cast(hd AS varchar)  AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)
+
+UNION
+SELECT  'price' AS chr, cast(price AS varchar) AS value
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC);
+
+# 42
+SELECT ship, battle
+FROM Outcomes
+WHERE result = 'sunk';
+
+# 43
+SELECT name
+FROM Battles
+WHERE year(date)
+          NOT IN (
+          SELECT launched
+          FROM Ships
+          WHERE launched IS NOT NULL
+      );
+
+# 44
+SELECT name
+FROM Ships
+WHERE name LIKE 'R%'
+UNION
+SELECT ship
+FROM Outcomes
+WHERE ship LIKE 'R%';
+
+# 45
+SELECT name
+FROM Ships
+WHERE name LIKE '% % %'
+UNION
+SELECT ship
+FROM Outcomes
+WHERE ship LIKE '% % %';
+
+# 46
+SELECT DISTINCT ship, displacement, numguns
+FROM Classes LEFT JOIN Ships
+                       ON classes.class = ships.class
+             RIGHT JOIN Outcomes
+                        ON Classes.class = ship
+                            OR ships.name = ship
+WHERE battle = 'Guadalcanal';
+
+# 47
+SELECT COUNT(*) num, t1.maker, t1.model
+FROM (
+         SELECT maker, model, c
+         FROM Product
+                  JOIN (
+             SELECT COUNT(model) c, maker m
+             FROM Product
+             GROUP BY maker
+         ) b1
+                       ON maker = m
+     ) t1
+         JOIN (
+    SELECT maker, model, c
+    FROM Product
+             JOIN (
+        SELECT COUNT(model) c, maker m
+        FROM Product
+        GROUP BY maker
+    ) b2
+                  ON maker = m
+) t2
+              ON t2.c > t1.c
+                  OR t2.c = t1.c AND t2.maker < t1.maker
+                  OR t2.c = t1.c AND t2.maker = t1.maker AND t2.model <= t1.model
+GROUP BY t1.maker, t1.model
+ORDER BY 1;
+
+# 48
+SELECT DISTINCT Classes.class
+FROM Classes, Ships, Outcomes
+WHERE Classes.class = Ships.class
+  AND Ships.name = Outcomes.ship
+  AND Outcomes.result = 'sunk'
+
+UNION
+SELECT DISTINCT class
+FROM Classes, Outcomes
+WHERE Classes.class = Outcomes.ship
+  AND Outcomes.result = 'sunk';
+
+# 49
+SELECT name
+FROM Ships, Classes
+WHERE Ships.class = Classes.class
+  AND bore = 16
+
+UNION
+SELECT ship
+FROM Outcomes, Classes
+WHERE Outcomes.ship = Classes.class
+  AND bore = 16;
+
+# 50
+SELECT battle
+FROM Outcomes, Ships
+WHERE Outcomes.ship = Ships.name
+  AND Ships.class = 'Kongo';
